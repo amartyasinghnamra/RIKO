@@ -1,0 +1,9 @@
+# Phase 1 — text chat only. GTK4 bindings come from system packages
+# (python3-gi on Ubuntu), not pip, so they aren't listed here.
+
+# Phase 2 (voice in) will add:
+# faster-whisper
+# sounddevice
+
+# Phase 3 (voice out) will add GPT-SoVITS as a separate cloned repo,
+# not a pip dependency.

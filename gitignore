@@ -1,0 +1,30 @@
+# Virtual environments
+.venv/
+.riko/
+venv/
+env/
+.env
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Whisper / model caches (Phase 2+)
+models/
+*.pt
+*.bin
+*.onnx
+
+# Audio caches (Phase 3+)
+audio_cache/
+*.wav
+*.mp3
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Local config overrides
+configs/*.local.yaml
