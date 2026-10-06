@@ -1,8 +1,27 @@
 .venv/
-audio/
-runtime/
+
+# User/private assets
 private/
+audio/
+
+# Runtime/generated data
+runtime/
+*.log
+
+# Downloaded models
 models/
+
+# Vendored/generated environments
 vendor/
+
+# Python generated files
 __pycache__/
 *.py[cod]
+*.egg-info/
+
+# Secrets/environment files
+.env
+.env.*
+
+# OS/editor junk
+.DS_Store
