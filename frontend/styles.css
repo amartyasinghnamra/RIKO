@@ -1,0 +1,1277 @@
+body {
+                  background-color: white; /* Ensure the iframe has a white background */
+                }
+
+                /* styles.css */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --bg-deep: #08080d;
+    --bg-mid: #0f0f18;
+    --bg-card: #16161f;
+    --text-primary: #f2ede4;
+    --text-secondary: #8a8a9a;
+    --text-dim: #5a5a6a;
+    --accent-warm: #d4a574;
+    --accent-gold: #e8c49a;
+    --state-idle: #6b7280;
+    --state-listening: #ef4444;
+    --state-thinking: #f59e0b;
+    --state-speaking: #10b981;
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --font-main: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font-main);
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    user-select: none;
+}
+
+/* ============================================
+   SCENE — full viewport, future 3D canvas
+   ============================================ */
+.scene {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 40%, #1a1528 0%, #0d0d14 50%, var(--bg-deep) 100%);
+}
+
+/* ============================================
+   ENVIRONMENT — ambient atmosphere layer
+   FUTURE: Replace with 3D environment (skybox,
+   room, lighting, particles, etc.)
+   ============================================ */
+.environment {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    transition: background 1.2s ease;
+}
+
+.environment::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(212, 165, 116, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(180, 140, 200, 0.03) 0%, transparent 40%);
+    animation: ambientShift 20s ease-in-out infinite;
+}
+
+.environment::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.5) 100%);
+    pointer-events: none;
+}
+
+@keyframes ambientShift {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+/* Environment state tinting */
+.environment.listening {
+    background: radial-gradient(ellipse at 50% 50%, rgba(239, 68, 68, 0.06) 0%, transparent 60%);
+}
+
+.environment.thinking {
+    background: radial-gradient(ellipse at 50% 50%, rgba(245, 158, 11, 0.05) 0%, transparent 60%);
+}
+
+.environment.speaking {
+    background: radial-gradient(ellipse at 50% 50%, rgba(16, 185, 129, 0.06) 0%, transparent 60%);
+}
+
+/* Floating ambient particles */
+.particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: rgba(232, 196, 154, 0.4);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: float linear infinite;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(100vh) translateX(0);
+        opacity: 0;
+    }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% {
+        transform: translateY(-10vh) translateX(30px);
+        opacity: 0;
+    }
+}
+
+/* ============================================
+   CHARACTER — PNG now, 3D model later
+   The .character-container is the mount point.
+   FUTURE: Replace <img> with <canvas> for Three.js.
+   ============================================ */
+.character-container {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -55%);
+    width: 420px;
+    height: 520px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.character-container.listening {
+    transform: translate(-50%, -56%) scale(1.02);
+}
+
+.character-container.speaking {
+    transform: translate(-50%, -55%) scale(1.01);
+}
+
+/* Ground shadow / reflection */
+.character-ground {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    height: 40px;
+    background: radial-gradient(ellipse, rgba(0, 0, 0, 0.5) 0%, transparent 70%);
+    filter: blur(8px);
+    transition: all 0.6s ease;
+}
+
+.character-container.listening .character-ground {
+    background: radial-gradient(ellipse, rgba(239, 68, 68, 0.25) 0%, transparent 70%);
+}
+
+.character-container.thinking .character-ground {
+    background: radial-gradient(ellipse, rgba(245, 158, 11, 0.2) 0%, transparent 70%);
+}
+
+.character-container.speaking .character-ground {
+    background: radial-gradient(ellipse, rgba(16, 185, 129, 0.25) 0%, transparent 70%);
+}
+
+/* Character aura / backlight */
+.character-aura {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 40%, rgba(212, 165, 116, 0.12) 0%, transparent 55%);
+    transition: all 0.8s ease;
+    pointer-events: none;
+}
+
+.character-container.listening .character-aura {
+    background: radial-gradient(circle at 50% 40%, rgba(239, 68, 68, 0.18) 0%, transparent 55%);
+    animation: auraPulse 1.5s ease-in-out infinite;
+}
+
+.character-container.thinking .character-aura {
+    background: radial-gradient(circle at 50% 40%, rgba(245, 158, 11, 0.15) 0%, transparent 55%);
+    animation: auraPulse 2s ease-in-out infinite;
+}
+
+.character-container.speaking .character-aura {
+    background: radial-gradient(circle at 50% 40%, rgba(16, 185, 129, 0.18) 0%, transparent 55%);
+    animation: auraPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes auraPulse {
+    0%, 100% { opacity: 0.8; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+}
+
+.character-image {
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    z-index: 2;
+    filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.6));
+    transition: filter 0.6s ease;
+}
+
+/* ============================================
+   UI OVERLAY — floats above the scene
+   ============================================ */
+.ui-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32px 40px 48px;
+    pointer-events: none;
+}
+
+.ui-overlay > * {
+    pointer-events: auto;
+}
+
+/* Close button */
+.close-btn {
+    position: absolute;
+    top: 24px;
+    right: 28px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border-subtle);
+    border-radius: 50%;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    transform: scale(1.08);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.close-btn:active {
+    transform: scale(0.95);
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin-top: 8px;
+}
+
+.title {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 8px;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    opacity: 0.85;
+    text-shadow: 0 2px 20px rgba(212, 165, 116, 0.2);
+}
+
+.subtitle {
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: lowercase;
+    margin-top: 6px;
+    opacity: 0.7;
+}
+
+/* Bottom controls */
+.state-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    height: 24px;
+}
+
+.state-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--state-idle);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.state-dot.listening {
+    background: var(--state-listening);
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.6);
+    animation: dotPulse 1s ease-in-out infinite;
+}
+
+.state-dot.thinking {
+    background: var(--state-thinking);
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.6);
+    animation: dotPulse 1.5s ease-in-out infinite;
+}
+
+.state-dot.speaking {
+    background: var(--state-speaking);
+    box-shadow: 0 0 14px rgba(16, 185, 129, 0.6);
+    animation: dotPulse 0.8s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.75); }
+}
+
+.state-text {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    letter-spacing: 0.8px;
+    transition: all 0.3s ease;
+}
+
+/* Action button */
+.action-btn {
+    position: relative;
+    min-width: 170px;
+    height: 58px;
+    padding: 0 28px;
+    background: rgba(22, 22, 31, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-subtle);
+    border-radius: 29px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    outline: none;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 29px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(212, 165, 116, 0.25), rgba(212, 165, 116, 0.05));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover:not(:disabled) {
+    background: rgba(30, 30, 42, 0.8);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(212, 165, 116, 0.08);
+}
+
+.action-btn:hover:not(:disabled)::before {
+    background: linear-gradient(135deg, rgba(212, 165, 116, 0.45), rgba(212, 165, 116, 0.1));
+}
+
+.action-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.action-btn:disabled {
+    cursor: default;
+}
+
+.action-btn.listening {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.35);
+    box-shadow: 0 0 40px rgba(239, 68, 68, 0.15);
+}
+
+.action-btn.listening::before {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.5), rgba(239, 68, 68, 0.1));
+}
+
+.action-btn.thinking {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.action-btn.thinking::before {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.4), rgba(245, 158, 11, 0.08));
+}
+
+.action-btn.speaking {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.action-btn.speaking::before {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.4), rgba(16, 185, 129, 0.08));
+}
+
+.action-btn-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 100%;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.action-btn.listening .action-btn-inner { color: var(--state-listening); }
+.action-btn.thinking .action-btn-inner { color: var(--state-thinking); }
+.action-btn.speaking .action-btn-inner { color: var(--state-speaking); }
+
+.action-text {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.icon {
+    flex-shrink: 0;
+    transition: opacity 0.2s ease;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.thinking-ring {
+    animation: spin 2s linear infinite;
+    transform-origin: center;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 600px) {
+    .character-container {
+        width: 320px;
+        height: 400px;
+    }
+    .ui-overlay {
+        padding: 24px 20px 36px;
+    }
+}
+
+@media (max-height: 700px) {
+    .character-container {
+        width: 340px;
+        height: 420px;
+    }
+}
+
+/* Riko microphone disconnected / backend unavailable */
+
+.state-dot.unknown {
+    background-color: #ef4444;
+    box-shadow: 0 0 8px #ef4444;
+}
+
+
+/* ============================================================
+   YOUTUBE-STYLE CLOSED CAPTIONS
+   ============================================================ */
+
+#riko-captions {
+    position: fixed;
+
+    left: 50%;
+    bottom: 8%;
+
+    transform:
+        translateX(-50%)
+        translateY(8px);
+
+    max-width: 75%;
+    padding: 6px 12px;
+
+    background: rgba(0, 0, 0, 0.78);
+
+    color: #ffffff;
+
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.4;
+
+    text-align: center;
+
+    border-radius: 4px;
+
+    opacity: 0;
+    visibility: hidden;
+
+    pointer-events: none;
+
+    transition:
+        opacity 0.12s ease,
+        transform 0.12s ease;
+
+    z-index: 9999;
+
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+#riko-captions.enabled {
+    opacity: 1;
+    visibility: visible;
+
+    transform:
+        translateX(-50%)
+        translateY(0);
+}
+
+#riko-caption-text {
+    display: block;
+    white-space: pre-wrap;
+}
+
+
+/* ============================================================
+   YOUTUBE-STYLE CLOSED CAPTIONS
+   ============================================================ */
+
+#riko-captions {
+    position: fixed;
+
+    left: 50%;
+    bottom: 8%;
+
+    transform:
+        translateX(-50%)
+        translateY(8px);
+
+    max-width: 75%;
+    padding: 6px 12px;
+
+    background: rgba(0, 0, 0, 0.78);
+
+    color: #ffffff;
+
+    font-size: 1.05rem;
+    font-weight: 500;
+    line-height: 1.4;
+
+    text-align: center;
+
+    border-radius: 4px;
+
+    opacity: 0;
+    visibility: hidden;
+
+    pointer-events: none;
+
+    transition:
+        opacity 0.12s ease,
+        transform 0.12s ease;
+
+    z-index: 9999;
+
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+#riko-captions.enabled {
+    opacity: 1;
+    visibility: visible;
+
+    transform:
+        translateX(-50%)
+        translateY(0);
+}
+
+#riko-caption-text {
+    display: block;
+    white-space: pre-wrap;
+}
+
+
+/* ============================================================
+   RIKO — IMMERSIVE / MINIMAL UI
+   ============================================================ */
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+body {
+    background: #000;
+}
+
+/* The entire application becomes the scene */
+#scene {
+    position: fixed;
+    inset: 0;
+
+    width: 100vw;
+    height: 100vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            rgba(30, 27, 40, 0.35) 0%,
+            rgba(5, 5, 8, 0.95) 85%
+        );
+}
+
+/* Remove the old webpage/card feeling */
+.window-container,
+.main-content {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+/* ------------------------------------------------------------
+   CHARACTER
+   ------------------------------------------------------------ */
+
+.image-container {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    margin: 0;
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+/*
+ * Let the actual artwork determine its proportions.
+ * Never stretch it.
+ */
+.image-container img,
+#riko-image,
+#scene img {
+    display: block;
+
+    width: auto;
+    height: auto;
+
+    max-width: 100vw;
+    max-height: 100vh;
+
+    object-fit: contain;
+
+    border: 0;
+    border-radius: 0;
+
+    box-shadow: none;
+}
+
+/*
+ * Remove the old circular/glow presentation.
+ */
+#riko-image {
+    border-radius: 0;
+}
+
+.image-glow {
+    display: none;
+}
+
+/* ------------------------------------------------------------
+   HEADER
+   ------------------------------------------------------------ */
+
+.app-header {
+    position: fixed;
+    top: 28px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    z-index: 3000;
+
+    margin: 0;
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition: opacity 180ms ease;
+}
+
+/* Show only when mouse is moving over the UI */
+#scene:hover .app-header {
+    opacity: 0.65;
+}
+
+/* ------------------------------------------------------------
+   MIC STATUS
+   ------------------------------------------------------------ */
+
+.state-container {
+    position: fixed;
+
+    top: 24px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    z-index: 3000;
+
+    margin: 0;
+
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition: opacity 180ms ease;
+}
+
+#scene:hover .state-container {
+    opacity: 0.75;
+}
+
+/* ------------------------------------------------------------
+   CLOSE
+   ------------------------------------------------------------ */
+
+#closeBtn,
+.close-btn {
+    position: fixed;
+
+    top: 20px;
+    right: 22px;
+
+    z-index: 4000;
+
+    opacity: 0;
+    pointer-events: none;
+
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+
+    transition:
+        opacity 180ms ease,
+        background 180ms ease;
+}
+
+#scene:hover #closeBtn,
+#scene:hover .close-btn {
+    opacity: 0.65;
+    pointer-events: auto;
+}
+
+/* ------------------------------------------------------------
+   TALK BUTTON
+   The ONLY permanently visible control.
+   ------------------------------------------------------------ */
+
+#actionBtn,
+.talk-btn {
+    position: fixed;
+
+    left: 50%;
+    bottom: 34px;
+
+    transform: translateX(-50%);
+
+    z-index: 5000;
+
+    opacity: 1;
+
+    min-width: 190px;
+    min-height: 58px;
+
+    background: rgba(12, 12, 18, 0.62);
+
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
+    box-shadow:
+        0 10px 35px rgba(0, 0, 0, 0.35);
+
+    transition:
+        transform 180ms ease,
+        background 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease;
+}
+
+#actionBtn:hover,
+.talk-btn:hover {
+    transform:
+        translateX(-50%)
+        translateY(-2px);
+
+    background: rgba(20, 20, 28, 0.88);
+
+    border-color:
+        rgba(255, 255, 255, 0.32);
+
+    box-shadow:
+        0 14px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* ------------------------------------------------------------
+   CAPTIONS
+   ------------------------------------------------------------ */
+
+#riko-captions {
+    position: fixed;
+
+    left: 50%;
+    bottom: 115px;
+
+    transform: translateX(-50%);
+
+    z-index: 6000;
+
+    max-width: min(80vw, 900px);
+
+    padding: 5px 12px;
+
+    background: rgba(0, 0, 0, 0.72);
+
+    border-radius: 4px;
+
+    color: #fff;
+
+    font-size: 1.05rem;
+    font-weight: 500;
+
+    line-height: 1.45;
+    text-align: center;
+
+    text-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.9);
+
+    opacity: 0;
+    visibility: hidden;
+
+    pointer-events: none;
+
+    transition:
+        opacity 120ms ease,
+        visibility 120ms ease;
+}
+
+#riko-captions.enabled {
+    opacity: 1;
+    visibility: visible;
+}
+
+#riko-caption-text {
+    display: block;
+    white-space: pre-wrap;
+}
+
+
+/* ============================================================
+   FINAL CHARACTER SCALE FIX
+   ============================================================ */
+
+/*
+ * The character container is the actual visual mount.
+ * Let it occupy the available scene instead of the old
+ * fixed 420x520 card.
+ */
+
+#characterContainer.character-container {
+    position: absolute;
+    inset: 0;
+
+    width: 100vw;
+    height: 100vh;
+
+    margin: 0;
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+/*
+ * The PNG grows naturally to fill the available space
+ * while preserving its original aspect ratio.
+ */
+
+#characterContainer .character-image {
+    display: block;
+
+    width: auto;
+    height: auto;
+
+    max-width: 100vw;
+    max-height: 100vh;
+
+    object-fit: contain;
+
+    margin: 0;
+    padding: 0;
+
+    border: none;
+    border-radius: 0;
+
+    box-shadow: none;
+}
+
+/*
+ * Don't let the decorative ground/aura constrain
+ * or visually dominate the character.
+ */
+
+#characterContainer .character-ground,
+#characterContainer .character-aura {
+    pointer-events: none;
+}
+
+/*
+ * The character should stay above the background,
+ * but below controls/captions.
+ */
+
+#characterContainer {
+    z-index: 100;
+}
+
+#characterContainer .character-image {
+    position: relative;
+    z-index: 110;
+}
+
+
+/* ============================================================
+   CHARACTER — FINAL POSITION / SCALE OVERRIDE
+   ============================================================ */
+
+#characterContainer {
+    position: fixed !important;
+    inset: 0 !important;
+
+    width: 100vw !important;
+    height: 100vh !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    transform: none !important;
+}
+
+/*
+ * IMPORTANT:
+ * Keep the image in the flex flow.
+ * Older rules were positioning it independently,
+ * which caused the top-left placement.
+ */
+
+#characterContainer #characterImage {
+    position: relative !important;
+
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+
+    transform: none !important;
+
+    display: block !important;
+
+    /*
+     * Fill the available scene naturally.
+     * Never distort the original aspect ratio.
+     */
+    width: auto !important;
+    height: auto !important;
+
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+
+    object-fit: contain !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    border: 0 !important;
+    border-radius: 0 !important;
+
+    box-shadow: none !important;
+}
+
+/*
+ * Don't let the decorative layers affect layout.
+ */
+
+#characterContainer .character-ground,
+#characterContainer .character-aura {
+    position: absolute !important;
+    pointer-events: none !important;
+}
+
+/* ============================================================
+   RIKO — SCALE TO VIEWPORT
+   ============================================================ */
+
+#characterContainer #characterImage {
+    width: auto !important;
+    height: 90vh !important;
+
+    max-width: 92vw !important;
+    max-height: 90vh !important;
+
+    object-fit: contain !important;
+
+    position: relative !important;
+    margin: 0 !important;
+}
+
+/* ============================================================
+   TALK BUTTON — FORCE VISIBLE / ABOVE CHARACTER
+   ============================================================ */
+
+#actionBtn {
+    position: fixed !important;
+
+    left: 50% !important;
+    bottom: 34px !important;
+
+    transform: translateX(-50%) !important;
+
+    z-index: 99999 !important;
+
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    pointer-events: auto !important;
+
+    min-width: 190px;
+    min-height: 58px;
+
+    background: rgba(12, 12, 18, 0.72) !important;
+
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 999px !important;
+
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
+    box-shadow:
+        0 10px 35px rgba(0, 0, 0, 0.45) !important;
+}
+
+#actionBtn:hover {
+    background: rgba(25, 25, 32, 0.92) !important;
+
+    border-color:
+        rgba(255, 255, 255, 0.35) !important;
+
+    transform:
+        translateX(-50%)
+        translateY(-2px) !important;
+}
+
+/* Disabled only while an API request is being processed */
+#actionBtn:disabled {
+    opacity: 0.65 !important;
+    pointer-events: none !important;
+}
+
+/* ============================================================
+   TALK BUTTON — FORCE VISIBLE / ABOVE CHARACTER
+   ============================================================ */
+
+#actionBtn {
+    position: fixed !important;
+
+    left: 50% !important;
+    bottom: 34px !important;
+
+    transform: translateX(-50%) !important;
+
+    z-index: 99999 !important;
+
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    pointer-events: auto !important;
+
+    min-width: 190px;
+    min-height: 58px;
+
+    background: rgba(12, 12, 18, 0.72) !important;
+
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 999px !important;
+
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+
+    box-shadow:
+        0 10px 35px rgba(0, 0, 0, 0.45) !important;
+}
+
+#actionBtn:hover {
+    background: rgba(25, 25, 32, 0.92) !important;
+
+    border-color:
+        rgba(255, 255, 255, 0.35) !important;
+
+    transform:
+        translateX(-50%)
+        translateY(-2px) !important;
+}
+
+/* Disabled only while an API request is being processed */
+#actionBtn:disabled {
+    opacity: 0.65 !important;
+    pointer-events: none !important;
+}
+
+/* ============================================================
+   FINAL TALK BUTTON LAYER
+   ============================================================ */
+
+#actionBtn {
+    position: fixed !important;
+
+    left: 50vw !important;
+    bottom: 32px !important;
+
+    width: 190px !important;
+    height: 58px !important;
+    min-width: 190px !important;
+    min-height: 58px !important;
+
+    margin: 0 !important;
+
+    transform: translate3d(-50%, 0, 0) !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    pointer-events: auto !important;
+
+    z-index: 2147483647 !important;
+
+    isolation: isolate;
+
+    cursor: pointer !important;
+}
+
+#actionBtn:hover {
+    transform: translate3d(-50%, -2px, 0) !important;
+}
+
+#actionBtn:disabled {
+    pointer-events: none !important;
+}
+
+/*
+ * Make sure nothing belonging to Riko can receive
+ * pointer events in the button's area.
+ */
+
+#characterContainer,
+#characterContainer *,
+#characterImage {
+    pointer-events: none !important;
+}
+
+/*
+ * Captions are visual only.
+ */
+
+#riko-captions {
+    pointer-events: none !important;
+}
+
+/* ============================================================
+   UI OVERLAY — ABOVE CHARACTER
+   ============================================================ */
+
+.ui-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+
+    width: 100vw !important;
+    height: 100vh !important;
+
+    z-index: 1000000 !important;
+
+    pointer-events: none !important;
+}
+
+/* Controls remain interactive */
+.ui-overlay #actionBtn,
+.ui-overlay #closeBtn,
+.ui-overlay .action-btn {
+    pointer-events: auto !important;
+}
+
+/* Talk button is the topmost interactive element */
+.ui-overlay #actionBtn {
+    z-index: 2147483647 !important;
+}
+
+/* Character is visual only and stays underneath */
+#characterContainer {
+    z-index: 100 !important;
+    pointer-events: none !important;
+}

@@ -1,0 +1,8 @@
+.venv/
+audio/
+runtime/
+private/
+models/
+vendor/
+__pycache__/
+*.py[cod]

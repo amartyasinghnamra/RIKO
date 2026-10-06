@@ -1,0 +1,10 @@
+# Runtime dependencies for Riko's microphone, UI-control, LLM and STT process.
+# GPT-SoVITS has its own pinned upstream environment installed by install.sh.
+numpy==2.5.2
+sounddevice==0.5.6
+soundfile==0.14.0
+faster-whisper==1.2.1
+requests==2.34.2
+PyYAML==6.0.3
+huggingface-hub==1.30.0
+ctranslate2==4.8.1

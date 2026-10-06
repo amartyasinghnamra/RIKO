@@ -1,0 +1,35 @@
+# This file captures the exact api_v2.py engine choices used by the project.
+# Copy it to private/gptsovits.yaml and change only paths/voice identity there.
+engine:
+  repository: https://github.com/RVC-Boss/GPT-SoVITS.git
+  revision: 48b1a0169a28582a8984402f82cf438d3bfa6aca
+  api_entrypoint: api_v2.py
+  host: 127.0.0.1
+  port: 9880
+  device: cpu
+  is_half: false
+  # Relative to vendor/GPT-SoVITS; this is the checked-in CPU config.
+  tts_config: ../../config/tts_infer.cpu.yaml
+
+# api_v2.py /tts request defaults. These deliberately contain no person or voice.
+inference:
+  text_lang: en
+  prompt_lang: en
+  text_split_method: cut5
+  batch_size: 1
+  batch_threshold: 0.75
+  split_bucket: true
+  speed_factor: 1.0
+  fragment_interval: 0.3
+  seed: -1
+  parallel_infer: true
+  repetition_penalty: 1.35
+  sample_steps: 32
+  super_sampling: false
+
+# A user supplies these during first-run setup. Never commit their values.
+voice:
+  ref_audio_path: private/voice/reference.wav
+  prompt_text: ""
+  gpt_weights_path: ""
+  sovits_weights_path: ""

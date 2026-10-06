@@ -1,0 +1,18 @@
+# Copy this to private/character_config.yaml during first-run setup.
+# The reference recording must be one you are entitled to use.
+sovits_ping_config:
+  text_lang: en
+  prompt_lang: en
+  ref_audio_path: private/voice/reference.wav
+  prompt_text: "Replace this with the words spoken in reference.wav."
+  text_split_method: cut5
+  batch_size: 1
+  batch_threshold: 0.75
+  split_bucket: true
+  speed_factor: 1.0
+  fragment_interval: 0.3
+  seed: -1
+  parallel_infer: true
+  repetition_penalty: 1.35
+  sample_steps: 32
+  super_sampling: false
